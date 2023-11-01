@@ -17,6 +17,23 @@
         update_cache: yes
       when: ansible_distribution == "Ubuntu"
 
+- hosts: workstations
+  become: true
+  tasks:
+    - name: Install unzip
+      package:
+        name: unzip
+
+    - name: Install Terraform
+      unarchive:
+        src: https://releases.hashicorp.com/terraform/1.6.2/terraform_1.6.2_linux_amd64.zip
+        dest: /usr/local/bin
+        remote_src: yes
+        mode: 0755
+        owner: root
+        group: root
+
+
 - hosts: web_servers # target the 'web_servers' group
   become: true
   tasks:
@@ -37,6 +54,32 @@
           - php 
         state: latest
       when: ansible_distribution == "CentOS"
+
+    - name: Start httpd (CentOS)
+      tags: apache,centos,httpd
+      service:
+        name: httpd
+        state: started
+        enabled: yes
+      when: ansible_distribution == "CentOS"
+
+    - name: Change e-mail address for admin
+      tags: apache,centos,httpd
+      lineinfile:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: "^ServerAdmin"
+        line: ServerAdmin rexsimiloluwa@gmail.com
+      when: ansible_distribution == "CentOS"
+      register: httpd # This will be used to check if a change has occurred
+
+
+    - name: Restart httpd (CentOS)
+      tags: apache,centos,httpd
+      service:
+        name: httpd
+        state: restarted
+      when: httpd.changed # Run this only when the 'httpd' variable in the previous task has changed
+
 
     - name: Copy default html file for the site
       tags: apache,apache2,httpd
