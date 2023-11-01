@@ -1,0 +1,50 @@
+---
+
+- hosts: all
+  become: true
+  pre_tasks: 
+    - name: Install updates (CentOS)
+      dnf:
+        update_only: yes
+        update_cache: yes
+      when: ansible_distribution == "CentOS"
+
+    - name: Install updates (Ubuntu)
+      apt:
+        upgrade: dist
+        update_cache: yes
+      when: ansible_distribution == "Ubuntu"
+
+- hosts: web_servers # target the 'web_servers' group
+  become: true
+  tasks:
+    - name: Install apache and php (Ubuntu)
+      apt:
+        name:
+          - apache2
+          - libapache2-mod-php 
+        state: latest
+      when: ansible_distribution == "Ubuntu"
+
+    - name: Install apache and php (CentOS)
+      dnf:
+        name:
+          - httpd
+          - php 
+        state: latest
+      when: ansible_distribution == "CentOS"
+
+- hosts: db_servers # target the 'db_servers' group
+  become: true
+  tasks:
+    - name: Install mariadb package (CentOS)
+      dnf:
+        name: mariadb
+        state: latest
+      when: ansible_distribution == "CentOS"
+
+    - name: Install mariadb package (Ubuntu)
+      apt:
+        name: mariadb-server
+        state: latest
+      when: ansible_distribution == "Ubuntu"
