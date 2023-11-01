@@ -1,0 +1,52 @@
+- name: Install apache and php (Ubuntu)
+  tags: apache,apache2,ubuntu
+  apt:
+    name:
+      - apache2
+      - libapache2-mod-php 
+    state: latest
+  when: ansible_distribution == "Ubuntu"
+
+- name: Install apache and php (CentOS)
+  tags: apache,centos,httpd
+  dnf:
+    name:
+      - httpd
+      - php 
+    state: latest
+  when: ansible_distribution == "CentOS"
+
+- name: Start httpd (CentOS)
+  tags: apache,centos,httpd
+  service:
+    name: httpd
+    state: started
+    enabled: yes
+  when: ansible_distribution == "CentOS"
+
+- name: Change e-mail address for admin
+  tags: apache,centos,httpd
+  lineinfile:
+    path: /etc/httpd/conf/httpd.conf
+    regexp: "^ServerAdmin"
+    line: ServerAdmin rexsimiloluwa@gmail.com
+  when: ansible_distribution == "CentOS"
+  register: httpd # This will be used to check if a change has occurred
+
+
+- name: Restart httpd (CentOS)
+  tags: apache,centos,httpd
+  service:
+    name: httpd
+    state: restarted
+  when: httpd.changed # Run this only when the 'httpd' variable in the previous task has changed
+
+
+- name: Copy default html file for the site
+  tags: apache,apache2,httpd
+  copy:
+    src: default_site.html
+    dest: /var/www/html/index.html
+    owner: root
+    group: root
+    mode: 0644

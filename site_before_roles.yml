@@ -1,0 +1,117 @@
+---
+
+- hosts: all
+  become: true
+  pre_tasks: 
+    - name: Install updates (CentOS)
+      tags: always
+      dnf:
+        update_only: yes
+        update_cache: yes
+      when: ansible_distribution == "CentOS"
+
+    - name: Install updates (Ubuntu)
+      tags: always
+      apt:
+        upgrade: dist
+        update_cache: yes
+      when: ansible_distribution == "Ubuntu"
+
+- hosts: all
+  become: true
+  tasks:
+    - name: Create a user
+      tags: always
+      user:
+        name: theblkdv
+        groups: root
+
+- hosts: workstations
+  become: true
+  tasks:
+    - name: Install unzip
+      package:
+        name: unzip
+
+    - name: Install Terraform
+      unarchive:
+        src: https://releases.hashicorp.com/terraform/1.6.2/terraform_1.6.2_linux_amd64.zip
+        dest: /usr/local/bin
+        remote_src: yes
+        mode: 0755
+        owner: root
+        group: root
+
+
+- hosts: web_servers # target the 'web_servers' group
+  become: true
+  tasks:
+    - name: Install apache and php (Ubuntu)
+      tags: apache,apache2,ubuntu
+      apt:
+        name:
+          - apache2
+          - libapache2-mod-php 
+        state: latest
+      when: ansible_distribution == "Ubuntu"
+
+    - name: Install apache and php (CentOS)
+      tags: apache,centos,httpd
+      dnf:
+        name:
+          - httpd
+          - php 
+        state: latest
+      when: ansible_distribution == "CentOS"
+
+    - name: Start httpd (CentOS)
+      tags: apache,centos,httpd
+      service:
+        name: httpd
+        state: started
+        enabled: yes
+      when: ansible_distribution == "CentOS"
+
+    - name: Change e-mail address for admin
+      tags: apache,centos,httpd
+      lineinfile:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: "^ServerAdmin"
+        line: ServerAdmin rexsimiloluwa@gmail.com
+      when: ansible_distribution == "CentOS"
+      register: httpd # This will be used to check if a change has occurred
+
+
+    - name: Restart httpd (CentOS)
+      tags: apache,centos,httpd
+      service:
+        name: httpd
+        state: restarted
+      when: httpd.changed # Run this only when the 'httpd' variable in the previous task has changed
+
+
+    - name: Copy default html file for the site
+      tags: apache,apache2,httpd
+      copy:
+        src: default_site.html
+        dest: /var/www/html/index.html
+        owner: root
+        group: root
+        mode: 0644
+
+- hosts: db_servers # target the 'db_servers' group
+  become: true
+  tasks:
+    - name: Install mariadb package (CentOS)
+      tags: centos,db,mariadb
+      dnf:
+        name: mariadb
+        state: latest
+      when: ansible_distribution == "CentOS"
+
+    - name: Install mariadb package (Ubuntu)
+      tags: db,mariadb,ubuntu
+      apt:
+        name: mariadb-server
+        state: latest
+      when: ansible_distribution == "Ubuntu"

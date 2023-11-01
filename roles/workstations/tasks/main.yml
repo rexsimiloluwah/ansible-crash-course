@@ -1,0 +1,12 @@
+- name: Install unzip
+  package:
+    name: unzip
+
+- name: Install Terraform
+  unarchive:
+    src: https://releases.hashicorp.com/terraform/1.6.2/terraform_1.6.2_linux_amd64.zip
+    dest: /usr/local/bin
+    remote_src: yes
+    mode: 0755
+    owner: root
+    group: root
