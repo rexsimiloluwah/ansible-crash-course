@@ -1,0 +1,18 @@
+---
+
+- hosts: all # target all hosts in the inventory
+  become: true # allow elevated privileges
+  tasks:
+    - name: Update repository index
+      apt:
+        update_cache: yes
+
+    - name: Install apache2 package
+      apt: # use the apt module
+        name: apache2
+        state: absent # remove the package 
+
+    - name: Add php support for apache
+      apt:
+        name: libapache2-mod-php
+        state: absent
