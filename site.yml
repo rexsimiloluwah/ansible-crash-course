@@ -17,6 +17,15 @@
         update_cache: yes
       when: ansible_distribution == "Ubuntu"
 
+- hosts: all
+  become: true
+  tasks:
+    - name: Create a user
+      tags: always
+      user:
+        name: theblkdv
+        groups: root
+
 - hosts: workstations
   become: true
   tasks:
