@@ -1,0 +1,58 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Create the EC2 instances for the Ansible practice
+
+Parameters:
+  KeyName:
+    Type: String
+
+  AmiId:
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Default: '/aws/service/canonical/ubuntu/server/focal/stable/current/amd64/hvm/ebs-gp2/ami-id'
+    Description: The AMI ID for the EC2 instance
+
+  InstanceType:
+    Type: String
+    Default: t2.micro
+    Description: The type of the EC2 instance
+
+Resources:
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Instance Security Group
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+
+  EC2Instance1:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      SecurityGroups:
+        - !Ref InstanceSecurityGroup
+      KeyName: !Ref KeyName
+      ImageId: !Ref AmiId 
+
+  EC2Instance2:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      SecurityGroups:
+        - !Ref InstanceSecurityGroup
+      KeyName: !Ref KeyName
+      ImageId: !Ref AmiId 
+
+Outputs:
+  EC2Instance1PublicIP:
+    Description: The public IP of the 1st EC2 instance
+    Value: !GetAtt EC2Instance1.PublicIp
+    Export:
+      Name: AnsibleEC2Instance1PublicIP
+
+  EC2Instance2PublicIP:
+    Description: The public IP of the 2nd EC2 instance
+    Value: !GetAtt EC2Instance2.PublicIp
+    Export:
+      Name: AnsibleEC2Instance2PublicIP
